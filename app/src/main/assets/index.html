@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>GPS Coordinates</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", sans-serif;
+      --bg: #0a1423;
+      --surface: #111f32;
+      --stroke: #26384f;
+      --muted: #99a9bb;
+      --white: #f4f8ff;
+      --mint: #26d9b2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--white);
+      min-height: 100vh; overflow-x: hidden;
+    }
+    .content { max-width: 520px; padding: 25px 20px 18px; margin: 0 auto; }
+    .brand { display: flex; gap: 11px; align-items: center; margin-bottom: 23px; }
+    .icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border: 1px solid rgba(38,217,178,.32);
+      border-radius: 12px; background: #123c3c; color: var(--mint); font-size: 21px;
+    }
+    .name { font-size: 17px; font-weight: 750; letter-spacing: -.3px; }
+    .tagline { color: #8295aa; font-size: 12px; margin-top: 2px; }
+    .eyebrow { font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; color: var(--mint); }
+    h1 { font-size: clamp(27px, 7vw, 38px); line-height: 1.1; margin: 12px 0 10px; letter-spacing: -1.1px; }
+    .intro { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0 0 22px; }
+    .signal-card {
+      overflow: hidden; position: relative; margin: 0 0 16px;
+      padding: 17px; border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(150deg,#172840,#101d2e 65%);
+    }
+    .grid-layer {
+      position: absolute; inset: 0; opacity: .14; pointer-events: none;
+      background-image: linear-gradient(to right, #2ec5ab 1px, transparent 1px),
+        linear-gradient(to bottom, #2ec5ab 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, transparent, black);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black);
+    }
+    .circle { width: 70px; height: 70px; border: 1px solid #39736f; border-radius: 50%;
+      margin: 7px auto 12px; display: flex; justify-content: center; align-items: center;
+      background: radial-gradient(circle, #17493f, #102336 75%); position: relative;
+      box-shadow: 0 0 0 13px rgba(33,160,133,.06),0 0 0 26px rgba(33,160,133,.035); }
+    .circle svg { width: 31px; height: 31px; color: var(--mint); }
+    .satellite { position: relative; text-align: center; font-size: 12px; color: #91b3ba; margin-bottom: 2px; }
+    .source { font-size: 12px; text-align: center; font-weight: 700; margin-bottom: 12px; letter-spacing: .3px; }
+    .status {
+      position: relative; line-height: 1.5; min-height: 45px;
+      font-size: 12px; border-radius: 11px; padding: 11px 12px;
+      display: flex; align-items: center; gap: 9px;
+      background: rgba(38,217,178,.08); border: 1px solid rgba(38,217,178,.13); color: #b6e8db;
+    }
+    .status .dot { width: 7px; height: 7px; border-radius: 50%; background: #8295aa; flex: none; }
+    .status.success .dot { background: var(--mint); box-shadow: 0 0 0 4px rgba(38,217,178,.12); }
+    .status.waiting .dot { background: #f4c76f; animation: pulse 1.5s infinite; }
+    .status.error .dot, .status.warning .dot { background: #f4aa71; }
+    @keyframes pulse { 50% { opacity: .3; } }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 14px; }
+    .coordinate {
+      border: 1px solid var(--stroke); background: var(--surface);
+      padding: 16px 12px 14px; border-radius: 15px; min-width: 0;
+    }
+    .coord-title { display: flex; gap: 6px; align-items: center; font-size: 10px; letter-spacing: 1px;
+      color: var(--muted); text-transform: uppercase; font-weight: 800; margin-bottom: 13px; }
+    .coord-title .symbol { color: var(--mint); font-size: 15px; }
+    .coord-number { font-size: clamp(15px, 4.5vw, 24px); font-variant-numeric: tabular-nums;
+      white-space: nowrap; letter-spacing: -.7px; font-weight: 750; }
+    .coord-unit { font-size: 11px; color: #70879f; margin-top: 6px; }
+    .details { background: #0f1d2f; border: 1px solid var(--stroke); border-radius: 15px; padding: 4px 15px; }
+    .detail { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; }
+    .detail + .detail { border-top: 1px solid #27384c; }
+    .detail .key { color: var(--muted); font-size: 12px; }
+    .detail .value { font-weight: 700; font-size: 12px; text-align: right; }
+    .footnote { padding-top: 16px; color: #7b8da2; font-size: 11px; line-height: 1.6; text-align: center; }
+    @media (max-height: 650px) {
+      .content { padding-top: 15px; }
+      .brand { margin-bottom: 13px; }
+      .intro { margin-bottom: 13px; }
+      .signal-card { padding: 12px; margin-bottom: 10px; }
+      .circle { width: 50px; height: 50px; margin: 3px auto 8px; }
+      .row { margin-bottom: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="content">
+    <div class="brand">
+      <div class="icon" aria-hidden="true">⌖</div>
+      <div><div class="name">GPS Coordinates</div><div class="tagline">Live device location · Offline</div></div>
+    </div>
+
+    <div class="eyebrow">Location dashboard</div>
+    <h1>Your position,<br>in real time.</h1>
+    <p class="intro">Latitude and longitude from your device's GPS provider, updated while the app is open.</p>
+
+    <section class="signal-card" aria-label="GPS status">
+      <div class="grid-layer"></div>
+      <div class="circle" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>
+          <path d="M12 1v5M12 18v5M1 12h5M18 12h5" />
+        </svg>
+      </div>
+      <div class="satellite">LOCATION SOURCE</div>
+      <div class="source">GPS satellites (GPS_PROVIDER)</div>
+      <div class="status idle" id="statusBox" role="status" aria-live="polite">
+        <span class="dot"></span><span id="statusText">Tap Start GPS to read your current location.</span>
+      </div>
+    </section>
+
+    <section class="row" aria-label="Geographic coordinates">
+      <div class="coordinate">
+        <div class="coord-title"><span class="symbol">↕</span> Latitude</div>
+        <div class="coord-number" id="latitude">—</div>
+        <div class="coord-unit">Degrees north / south</div>
+      </div>
+      <div class="coordinate">
+        <div class="coord-title"><span class="symbol">↔</span> Longitude</div>
+        <div class="coord-number" id="longitude">—</div>
+        <div class="coord-unit">Degrees east / west</div>
+      </div>
+    </section>
+
+    <section class="details" aria-label="Fix details">
+      <div class="detail"><span class="key">GPS accuracy</span><span class="value" id="accuracy">Not available</span></div>
+      <div class="detail"><span class="key">Last GPS fix</span><span class="value" id="updated">Waiting for fix</span></div>
+    </section>
+    <div class="footnote">No account, map API, internet, or data upload is required. GPS works best with a clear view of the sky.</div>
+  </main>
+
+  <script>
+    'use strict';
+    window.setStatus = function (message, kind) {
+      var element = document.getElementById('statusBox');
+      element.className = 'status ' + (['success','waiting','error','warning','idle'].indexOf(kind) !== -1 ? kind : 'idle');
+      document.getElementById('statusText').textContent = String(message);
+    };
+
+    window.updatePosition = function (latitude, longitude, accuracyMeters, unixMillis) {
+      document.getElementById('latitude').textContent = Number(latitude).toFixed(6) + '°';
+      document.getElementById('longitude').textContent = Number(longitude).toFixed(6) + '°';
+      document.getElementById('accuracy').textContent = '±' + Number(accuracyMeters).toFixed(1) + ' m';
+      document.getElementById('updated').textContent = new Date(Number(unixMillis)).toLocaleTimeString();
+    };
+
+    window.clearPosition = function () {
+      document.getElementById('latitude').textContent = '—';
+      document.getElementById('longitude').textContent = '—';
+      document.getElementById('accuracy').textContent = 'Not available';
+      document.getElementById('updated').textContent = 'Waiting for fix';
+    };
+  </script>
+</body>
+</html>
